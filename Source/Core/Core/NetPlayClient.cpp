@@ -675,6 +675,7 @@ void NetPlayClient::OnPadData(sf::Packet& packet)
     packet >> map;
 
     GCPadStatus pad;
+    MouseInjector::Delta mouse_delta;
     packet >> pad.button;
     if (static_cast<size_t>(map) < m_net_settings.gba_config.size() &&
         !m_net_settings.gba_config.at(map).enabled)
@@ -682,10 +683,12 @@ void NetPlayClient::OnPadData(sf::Packet& packet)
       packet >> pad.analogA >> pad.analogB >> pad.stickX >> pad.stickY >> pad.substickX >>
           pad.substickY >> pad.triggerLeft >> pad.triggerRight >> pad.isConnected;
     }
+    packet >> mouse_delta.dx >> mouse_delta.dy;
 
     if (static_cast<size_t>(map) < m_pad_buffer.size())
     {
       m_pad_buffer.at(map).Push(pad);
+      m_mouse_delta_buffer.at(map).Push(mouse_delta);
       m_gc_pad_event.Set();
     }
   }
@@ -699,6 +702,7 @@ void NetPlayClient::OnPadHostData(sf::Packet& packet)
     packet >> map;
 
     GCPadStatus pad;
+    MouseInjector::Delta mouse_delta;
     packet >> pad.button;
     if (static_cast<size_t>(map) < m_net_settings.gba_config.size() &&
         !m_net_settings.gba_config.at(map).enabled)
@@ -706,9 +710,13 @@ void NetPlayClient::OnPadHostData(sf::Packet& packet)
       packet >> pad.analogA >> pad.analogB >> pad.stickX >> pad.stickY >> pad.substickX >>
           pad.substickY >> pad.triggerLeft >> pad.triggerRight >> pad.isConnected;
     }
+    packet >> mouse_delta.dx >> mouse_delta.dy;
 
     if (static_cast<size_t>(map) < m_last_pad_status.size())
+    {
       m_last_pad_status[map] = pad;
+      m_last_mouse_delta[map] = mouse_delta;
+    }
 
     if (static_cast<size_t>(map) < m_first_pad_status_received.size())
     {
@@ -1697,7 +1705,7 @@ void NetPlayClient::SendChatMessage(const std::string& msg)
 
 // called from ---CPU--- thread
 void NetPlayClient::AddPadStateToPacket(const int in_game_pad, const GCPadStatus& pad,
-                                        sf::Packet& packet)
+                                        const MouseInjector::Delta& mouse_delta, sf::Packet& packet)
 {
   packet << static_cast<PadIndex>(in_game_pad);
   packet << pad.button;
@@ -1706,6 +1714,7 @@ void NetPlayClient::AddPadStateToPacket(const int in_game_pad, const GCPadStatus
     packet << pad.analogA << pad.analogB << pad.stickX << pad.stickY << pad.substickX
            << pad.substickY << pad.triggerLeft << pad.triggerRight << pad.isConnected;
   }
+  packet << mouse_delta.dx << mouse_delta.dy;
 }
 
 // called from ---CPU--- thread
@@ -1880,6 +1889,9 @@ void NetPlayClient::ClearBuffers()
   {
     while (m_pad_buffer[i].Size())
       m_pad_buffer[i].Pop();
+
+    while (m_mouse_delta_buffer[i].Size())
+      m_mouse_delta_buffer[i].Pop();
 
     while (m_wiimote_buffer[i].Size())
       m_wiimote_buffer[i].Pop();
@@ -2063,6 +2075,10 @@ bool NetPlayClient::GetNetPads(const int pad_nb, const bool batching, GCPadStatu
   }
 
   m_pad_buffer[pad_nb].Pop(*pad_status);
+  MouseInjector::Delta mouse_delta;
+  if (m_mouse_delta_buffer[pad_nb].Size() != 0)
+    m_mouse_delta_buffer[pad_nb].Pop(mouse_delta);
+  MouseInjector::ApplyNetPlayDelta(pad_nb, mouse_delta);
 
   auto& movie = Core::System::GetInstance().GetMovie();
   if (movie.IsRecordingInput())
@@ -2144,31 +2160,36 @@ bool NetPlayClient::PollLocalPad(const int local_pad, sf::Packet& packet)
 
   if (m_host_input_authority)
   {
+    const MouseInjector::Delta mouse_delta = MouseInjector::CaptureDelta();
     if (m_local_player->pid != m_current_golfer)
     {
       // add to packet
-      AddPadStateToPacket(ingame_pad, pad_status, packet);
+      AddPadStateToPacket(ingame_pad, pad_status, mouse_delta, packet);
       data_added = true;
     }
     else
     {
       // set locally
       m_last_pad_status[ingame_pad] = pad_status;
+      m_last_mouse_delta[ingame_pad] = mouse_delta;
       m_first_pad_status_received[ingame_pad] = true;
     }
   }
   else
   {
+    MouseInjector::Delta mouse_delta = MouseInjector::CaptureDelta();
     // adjust the buffer either up or down
     // inserting multiple padstates or dropping states
     while (m_pad_buffer[ingame_pad].Size() <= m_target_buffer_size)
     {
       // add to buffer
       m_pad_buffer[ingame_pad].Push(pad_status);
+      m_mouse_delta_buffer[ingame_pad].Push(mouse_delta);
 
       // add to packet
-      AddPadStateToPacket(ingame_pad, pad_status, packet);
+      AddPadStateToPacket(ingame_pad, pad_status, mouse_delta, packet);
       data_added = true;
+      mouse_delta = {};
     }
   }
 
@@ -2239,8 +2260,11 @@ void NetPlayClient::SendPadHostPoll(const PadIndex pad_num)
         continue;
 
       const GCPadStatus& pad_status = m_last_pad_status[i];
+      const MouseInjector::Delta mouse_delta = m_last_mouse_delta[i];
       m_pad_buffer[i].Push(pad_status);
-      AddPadStateToPacket(static_cast<int>(i), pad_status, packet);
+      m_mouse_delta_buffer[i].Push(mouse_delta);
+      AddPadStateToPacket(static_cast<int>(i), pad_status, mouse_delta, packet);
+      m_last_mouse_delta[i] = {};
     }
   }
   else if (m_net_settings.pad_map[pad_num] != 0)
@@ -2256,8 +2280,11 @@ void NetPlayClient::SendPadHostPoll(const PadIndex pad_num)
     if (m_pad_buffer[pad_num].Size() == 0)
     {
       const GCPadStatus& pad_status = m_last_pad_status[pad_num];
+      const MouseInjector::Delta mouse_delta = m_last_mouse_delta[pad_num];
       m_pad_buffer[pad_num].Push(pad_status);
-      AddPadStateToPacket(pad_num, pad_status, packet);
+      m_mouse_delta_buffer[pad_num].Push(mouse_delta);
+      AddPadStateToPacket(pad_num, pad_status, mouse_delta, packet);
+      m_last_mouse_delta[pad_num] = {};
     }
   }
 

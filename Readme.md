@@ -1,3 +1,89 @@
+﻿# Dolphin NP2MI
+
+NP2MI is a custom Dolphin prototype for synchronized 2-player NetPlay mouse
+aiming. Mouse movement is captured inside Dolphin, sent through NetPlay, and
+applied to the assigned in-game player.
+
+## Version
+
+```text
+NP2MI-0.1
+```
+
+All NetPlay players should use the exact same NP2MI build and game version.
+
+## Game Compatibility
+
+| Game | Platform | Region | Game ID | Status | Notes |
+| --- | --- | --- | --- | --- | --- |
+| TimeSplitters 2 | GameCube | NTSC-U | GTSE4F | Supported | Tested for 2-player co-op NetPlay |
+| TimeSplitters 2 | GameCube | PAL | GTSP4F | Unsupported | Different memory offsets expected |
+| TimeSplitters 2 | GameCube | NTSC-J | Unknown | Unsupported | Untested |
+| TimeSplitters: Future Perfect | GameCube | Any | Unknown | Unsupported | Future work |
+
+## Intended Use
+
+Recommended setup: 2 PCs, Dolphin NetPlay, one player per Dolphin instance.
+This is not currently intended as a polished local split-screen mouse solution
+on a single PC.
+
+## Main Features
+
+- NetPlay-synchronized mouse aiming.
+- Player 1/player 2 targeting for TimeSplitters 2 co-op.
+- Per-player FOV handling for sniper zoom.
+- Adjustable sensitivity.
+- Camera/turret safety lock to prevent background character rotation.
+- Minimal on-screen messages.
+
+## Default Hotkeys
+
+```text
+4          Toggle NetPlay 2P Mouse
+SUBTRACT   Decrease NetPlay 2P Mouse Sensitivity
+ADD        Increase NetPlay 2P Mouse Sensitivity
+```
+
+These hotkeys can be changed in Dolphin's Hotkey Settings.
+
+## Recommended NetPlay Setup
+
+- Same NP2MI build on both PCs.
+- Same TimeSplitters 2 NTSC-U disc/image.
+- Use "No Save Data" when possible.
+- Avoid mismatched memory cards or save data.
+- Keep cheats, patches, and game-modifying settings identical.
+- Map one in-game player per PC.
+
+## Suggested Player Assignment
+
+Typical 2-player setup:
+
+```text
+PC 1 -> GameCube Port 1 -> Player 1
+PC 2 -> GameCube Port 2 -> Player 2
+```
+
+Each PC should enable the mouse injection locally with `4` when ready.
+
+## Known Limitations
+
+- Only TimeSplitters 2 NTSC-U is currently supported.
+- Turret/camera mouse control is not implemented.
+- When entering camera/turret mode, mouse injection is intentionally ignored.
+- The implementation still uses hardcoded TS2 memory offsets.
+- NetPlay desyncs may still happen due to save data or mismatched settings.
+
+## Future Work
+
+- TimeSplitters 3 support.
+- PAL/Japanese TimeSplitters 2 support.
+- A profile system for multiple games and regions.
+- A dedicated settings tab or UI section.
+- Investigation of real turret/camera aiming support.
+
+## Original Dolphin README
+
 # Dolphin - A GameCube and Wii Emulator
 
 [Homepage](https://dolphin-emu.org/) | [Project Site](https://github.com/dolphin-emu/dolphin) | [Buildbot](https://dolphin.ci/) | [Forums](https://forums.dolphin-emu.org/) | [Wiki](https://wiki.dolphin-emu.org/) | [GitHub Wiki](https://github.com/dolphin-emu/dolphin/wiki) | [Issue Tracker](https://bugs.dolphin-emu.org/projects/emulator/issues) | [Coding Style](https://github.com/dolphin-emu/dolphin/blob/master/Contributing.md) | [Transifex Page](https://app.transifex.com/dolphinemu/dolphin-emu/dashboard/) | [Analytics](https://mon.dolphin-emu.org/)
@@ -54,10 +140,10 @@ The "Debug" solution configuration is significantly slower, more verbose and les
 
 ## Building for Linux and macOS
 
-Dolphin requires [CMake](https://cmake.org/) for systems other than Windows. 
+Dolphin requires [CMake](https://cmake.org/) for systems other than Windows.
 You need a recent version of GCC or Clang with decent c++20 support. CMake will
 inform you if your compiler is too old.
-Many libraries are bundled with Dolphin and used if they're not installed on 
+Many libraries are bundled with Dolphin and used if they're not installed on
 your system. CMake will inform you if a bundled library is used or if you need
 to install any missing packages yourself. You may refer to the [wiki](https://github.com/dolphin-emu/dolphin/wiki/Building-for-Linux) for more information.
 
@@ -68,7 +154,7 @@ git submodule update --init --recursive
 
 ### macOS Build Steps:
 
-A binary supporting a single architecture can be built using the following steps: 
+A binary supporting a single architecture can be built using the following steps:
 
 1. `mkdir build`
 2. `cd build`
@@ -86,8 +172,8 @@ application bundle using the following steps:
 4. Universal binaries will be available in the `universal` folder
 
 Doing this is more complex as it requires installation of library dependencies for both x64 and ARM (or universal library
-equivalents) and may require specifying additional arguments to point to relevant library locations. 
-Execute BuildMacOSUniversalBinary.py --help for more details.  
+equivalents) and may require specifying additional arguments to point to relevant library locations.
+Execute BuildMacOSUniversalBinary.py --help for more details.
 
 ### Linux Global Build Steps:
 

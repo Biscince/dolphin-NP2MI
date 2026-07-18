@@ -843,6 +843,10 @@ unsigned int NetPlayServer::OnData(sf::Packet& packet, Client& player)
         spac << pad.analogA << pad.analogB << pad.stickX << pad.stickY << pad.substickX
              << pad.substickY << pad.triggerLeft << pad.triggerRight << pad.isConnected;
       }
+      float mouse_dx = 0;
+      float mouse_dy = 0;
+      packet >> mouse_dx >> mouse_dy;
+      spac << mouse_dx << mouse_dy;
     }
 
     if (m_host_input_authority)
@@ -889,6 +893,10 @@ unsigned int NetPlayServer::OnData(sf::Packet& packet, Client& player)
         spac << pad.analogA << pad.analogB << pad.stickX << pad.stickY << pad.substickX
              << pad.substickY << pad.triggerLeft << pad.triggerRight << pad.isConnected;
       }
+      float mouse_dx = 0;
+      float mouse_dy = 0;
+      packet >> mouse_dx >> mouse_dy;
+      spac << mouse_dx << mouse_dy;
     }
 
     SendToClients(spac, player.pid);

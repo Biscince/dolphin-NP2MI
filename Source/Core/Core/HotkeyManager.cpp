@@ -35,6 +35,9 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Center Mouse"),
     _trans("Activate NetPlay Chat"),
     _trans("Control NetPlay Golf Mode"),
+    _trans("Toggle NetPlay 2P Mouse"),
+    _trans("Decrease NetPlay 2P Mouse Sensitivity"),
+    _trans("Increase NetPlay 2P Mouse Sensitivity"),
 #ifdef USE_RETRO_ACHIEVEMENTS
     _trans("Open Achievements"),
 #endif  // USE_RETRO_ACHIEVEMENTS
@@ -296,7 +299,7 @@ constexpr std::array<HotkeyGroupInfo, NUM_HOTKEY_GROUPS> s_groups_info = {
 #ifdef USE_RETRO_ACHIEVEMENTS
     {{_trans("General"), HK_OPEN, HK_OPEN_ACHIEVEMENTS},
 #else   // USE_RETRO_ACHIEVEMENTS
-    {{_trans("General"), HK_OPEN, HK_REQUEST_GOLF_CONTROL},
+    {{_trans("General"), HK_OPEN, HK_MOUSE_INJECTOR_SENSITIVITY_UP},
 #endif  // USE_RETRO_ACHIEVEMENTS
      {_trans("Volume"), HK_VOLUME_DOWN, HK_VOLUME_TOGGLE_MUTE},
      {_trans("Emulation Speed"), HK_DECREASE_EMULATION_SPEED, HK_TOGGLE_THROTTLE},
@@ -419,6 +422,9 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
 #ifdef USE_RETRO_ACHIEVEMENTS
   set_key_expression(HK_OPEN_ACHIEVEMENTS, hotkey_string({"Alt", "A"}));
 #endif  // USE_RETRO_ACHIEVEMENTS
+  set_key_expression(HK_MOUSE_INJECTOR_TOGGLE, "`4`");
+  set_key_expression(HK_MOUSE_INJECTOR_SENSITIVITY_DOWN, "SUBTRACT");
+  set_key_expression(HK_MOUSE_INJECTOR_SENSITIVITY_UP, "ADD");
   set_key_expression(HK_STEP, "F11");
   set_key_expression(HK_STEP_OVER, hotkey_string({"Shift", "F10"}));
   set_key_expression(HK_STEP_OUT, hotkey_string({"Shift", "F11"}));

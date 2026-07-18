@@ -19,6 +19,8 @@ namespace Common
 #define BUILD_TYPE_STR ""
 #endif
 
+#define NETPLAY_2P_MOUSE_VERSION "-NP2MI-0.1"
+
 const std::string& GetEmulatorName()
 {
   static const std::string emulator_name = EMULATOR_NAME;
@@ -34,22 +36,22 @@ const std::string& GetScmRevStr()
 #endif
 
 #ifdef __INTEL_COMPILER
-      BUILD_TYPE_STR SCM_DESC_STR "-ICC";
+      BUILD_TYPE_STR SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION "-ICC";
 #else
-      BUILD_TYPE_STR SCM_DESC_STR;
+      BUILD_TYPE_STR SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION;
 #endif
   return scm_rev_str;
 }
 
 const std::string& GetScmRevGitStr()
 {
-  static const std::string scm_rev_git_str = SCM_REV_STR;
+  static const std::string scm_rev_git_str = SCM_REV_STR NETPLAY_2P_MOUSE_VERSION;
   return scm_rev_git_str;
 }
 
 const std::string& GetScmDescStr()
 {
-  static const std::string scm_desc_str = SCM_DESC_STR;
+  static const std::string scm_desc_str = SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION;
   return scm_desc_str;
 }
 
@@ -61,7 +63,7 @@ const std::string& GetScmBranchStr()
 
 const std::string& GetUserAgentStr()
 {
-  static const std::string user_agent_str = EMULATOR_NAME "/" SCM_DESC_STR;
+  static const std::string user_agent_str = EMULATOR_NAME "/" SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION;
   return user_agent_str;
 }
 
@@ -80,11 +82,11 @@ const std::string& GetScmUpdateTrackStr()
 const std::string& GetNetplayDolphinVer()
 {
 #ifdef _WIN32
-  static const std::string netplay_dolphin_ver = SCM_DESC_STR " Win";
+  static const std::string netplay_dolphin_ver = SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION " Win";
 #elif __APPLE__
-  static const std::string netplay_dolphin_ver = SCM_DESC_STR " Mac";
+  static const std::string netplay_dolphin_ver = SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION " Mac";
 #else
-  static const std::string netplay_dolphin_ver = SCM_DESC_STR " Lin";
+  static const std::string netplay_dolphin_ver = SCM_DESC_STR NETPLAY_2P_MOUSE_VERSION " Lin";
 #endif
   return netplay_dolphin_ver;
 }

@@ -19,6 +19,7 @@
 #include "Common/Event.h"
 #include "Common/SPSCQueue.h"
 #include "Common/TraversalClient.h"
+#include "Core/MouseInjector.h"
 #include "Core/NetPlayProto.h"
 #include "Core/SyncIdentifier.h"
 #include "InputCommon/GCPadStatus.h"
@@ -198,9 +199,11 @@ protected:
   Common::SPSCQueue<AsyncQueueEntry> m_async_queue;
 
   std::array<Common::SPSCQueue<GCPadStatus>, 4> m_pad_buffer;
+  std::array<Common::SPSCQueue<MouseInjector::Delta>, 4> m_mouse_delta_buffer;
   std::array<Common::SPSCQueue<WiimoteEmu::SerializedWiimoteState>, 4> m_wiimote_buffer;
 
   std::array<GCPadStatus, 4> m_last_pad_status{};
+  std::array<MouseInjector::Delta, 4> m_last_mouse_delta{};
   std::array<bool, 4> m_first_pad_status_received{};
 
   std::chrono::time_point<std::chrono::steady_clock> m_buffer_under_target_last;
@@ -257,7 +260,8 @@ private:
   bool AddLocalWiimoteToBuffer(int local_wiimote, const WiimoteEmu::SerializedWiimoteState& state,
                                sf::Packet& packet);
 
-  void AddPadStateToPacket(int in_game_pad, const GCPadStatus& np, sf::Packet& packet);
+  void AddPadStateToPacket(int in_game_pad, const GCPadStatus& np,
+                           const MouseInjector::Delta& mouse_delta, sf::Packet& packet);
   void AddWiimoteStateToPacket(int in_game_pad, const WiimoteEmu::SerializedWiimoteState& np,
                                sf::Packet& packet);
   void Send(const sf::Packet& packet, u8 channel_id = DEFAULT_CHANNEL);

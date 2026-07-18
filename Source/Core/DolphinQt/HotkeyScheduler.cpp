@@ -26,6 +26,7 @@
 #include "Core/FreeLookManager.h"
 #include "Core/HotkeyManager.h"
 #include "Core/IOS/IOS.h"
+#include "Core/MouseInjector.h"
 #include "Core/State.h"
 #include "Core/System.h"
 #include "Core/WiiUtils.h"
@@ -252,6 +253,15 @@ void HotkeyScheduler::Run()
 
       if (IsHotkey(HK_REQUEST_GOLF_CONTROL))
         emit RequestGolfControl();
+
+      if (IsHotkey(HK_MOUSE_INJECTOR_TOGGLE))
+        MouseInjector::Toggle();
+
+      if (IsHotkey(HK_MOUSE_INJECTOR_SENSITIVITY_DOWN))
+        MouseInjector::DecreaseSensitivity();
+
+      if (IsHotkey(HK_MOUSE_INJECTOR_SENSITIVITY_UP))
+        MouseInjector::IncreaseSensitivity();
 
       if (IsHotkey(HK_EXPORT_RECORDING))
         emit ExportRecording();

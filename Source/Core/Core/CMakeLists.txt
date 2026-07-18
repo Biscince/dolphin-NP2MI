@@ -501,6 +501,8 @@ add_library(core
   MemTools.h
   Movie.cpp
   Movie.h
+  MouseInjector.cpp
+  MouseInjector.h
   NetPlayClient.cpp
   NetPlayClient.h
   NetPlayCommon.cpp
