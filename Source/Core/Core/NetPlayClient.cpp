@@ -2161,6 +2161,7 @@ bool NetPlayClient::PollLocalPad(const int local_pad, sf::Packet& packet)
   if (m_host_input_authority)
   {
     const MouseInjector::Delta mouse_delta = MouseInjector::CaptureDelta();
+    MouseInjector::ApplyCameraModePadInput(ingame_pad, mouse_delta, &pad_status);
     if (m_local_player->pid != m_current_golfer)
     {
       // add to packet
@@ -2182,12 +2183,15 @@ bool NetPlayClient::PollLocalPad(const int local_pad, sf::Packet& packet)
     // inserting multiple padstates or dropping states
     while (m_pad_buffer[ingame_pad].Size() <= m_target_buffer_size)
     {
+      GCPadStatus frame_pad_status = pad_status;
+      MouseInjector::ApplyCameraModePadInput(ingame_pad, mouse_delta, &frame_pad_status);
+
       // add to buffer
-      m_pad_buffer[ingame_pad].Push(pad_status);
+      m_pad_buffer[ingame_pad].Push(frame_pad_status);
       m_mouse_delta_buffer[ingame_pad].Push(mouse_delta);
 
       // add to packet
-      AddPadStateToPacket(ingame_pad, pad_status, mouse_delta, packet);
+      AddPadStateToPacket(ingame_pad, frame_pad_status, mouse_delta, packet);
       data_added = true;
       mouse_delta = {};
     }

@@ -1,25 +1,28 @@
 ﻿# Dolphin NP2MI
 
-NP2MI is a custom Dolphin prototype for synchronized 2-player NetPlay mouse
-aiming. Mouse movement is captured inside Dolphin, sent through NetPlay, and
-applied to the assigned in-game player.
+NP2MI is a custom Dolphin build for synchronized 2-player NetPlay mouse aiming.
+Mouse movement is captured inside Dolphin, transmitted through NetPlay, and
+applied only to the assigned in-game player.
 
 ## Version
 
 ```text
-NP2MI-0.1
+NP2MI v0.1.0
+Dolphin base: 2606-143
 ```
 
-All NetPlay players should use the exact same NP2MI build and game version.
+All NetPlay players must use the exact same NP2MI build and game version.
 
-## Game Compatibility
+## Supported Titles
 
-| Game | Platform | Region | Game ID | Status | Notes |
-| --- | --- | --- | --- | --- | --- |
-| TimeSplitters 2 | GameCube | NTSC-U | GTSE4F | Supported | Tested for 2-player co-op NetPlay |
-| TimeSplitters 2 | GameCube | PAL | GTSP4F | Unsupported | Different memory offsets expected |
-| TimeSplitters 2 | GameCube | NTSC-J | Unknown | Unsupported | Untested |
-| TimeSplitters: Future Perfect | GameCube | Any | Unknown | Unsupported | Future work |
+| Game Title | Version | Input Profile | Mouse Support | Issues |
+| --- | :---: | :---: | :---: | ----------- |
+| TimeSplitters 2 | NTSC-U (`GTSE4F`) | :heavy_check_mark: | Fair | <sup>Turret/camera vertical input can feel inconsistent in some levels.</sup> |
+| TimeSplitters 2 | PAL (`GTSP4F`) | :x: | None | <sup>Memory profile not implemented yet.</sup> |
+| TimeSplitters: Future Perfect | Any | :x: | None | <sup>No NP2MI input profile is currently implemented.</sup> |
+
+The NTSC-U profile has been tested through the complete 2-player story
+campaign over NetPlay.
 
 ## Intended Use
 
@@ -27,19 +30,25 @@ Recommended setup: 2 PCs, Dolphin NetPlay, one player per Dolphin instance.
 This is not currently intended as a polished local split-screen mouse solution
 on a single PC.
 
+Solo play is also supported, but the game must still be launched through a
+NetPlay session.
+
 ## Main Features
 
 - NetPlay-synchronized mouse aiming.
 - Player 1/player 2 targeting for TimeSplitters 2 co-op.
 - Per-player FOV handling for sniper zoom.
+- Mouse control in supported camera and turret sequences.
+- Restricted aiming behavior for scoped and turret views.
+- Mouse/native camera mode toggle.
 - Adjustable sensitivity.
-- Camera/turret safety lock to prevent background character rotation.
 - Minimal on-screen messages.
 
-## Default Hotkeys
+## Default Hotkeys (included in Portable Release version)
 
 ```text
 4          Toggle NetPlay 2P Mouse
+5          Toggle mouse/native camera mode
 SUBTRACT   Decrease NetPlay 2P Mouse Sensitivity
 ADD        Increase NetPlay 2P Mouse Sensitivity
 ```
@@ -69,20 +78,22 @@ Each PC should enable the mouse injection locally with `4` when ready.
 ## Known Limitations
 
 - Only TimeSplitters 2 NTSC-U is currently supported.
-- Turret/camera mouse control is not implemented.
-- When entering camera/turret mode, mouse injection is intentionally ignored.
+- Vertical mouse movement in turret sequences (Siberia/Return to Planet X/Robot Factory) is less consistent than
+  normal first-person aiming.
+- Camera and turret control emulates native C-stick input and can retain some
+  of the original game's aiming behavior.
 - The implementation still uses hardcoded TS2 memory offsets.
+- Local split-screen mouse control on a single PC is not the intended setup.
 - NetPlay desyncs may still happen due to save data or mismatched settings.
 
 ## Future Work
 
-- TimeSplitters 3 support.
-- PAL/Japanese TimeSplitters 2 support.
+- TimeSplitters 2 PAL support.
 - A profile system for multiple games and regions.
+- TimeSplitters: Future Perfect support.
 - A dedicated settings tab or UI section.
-- Investigation of real turret/camera aiming support.
 
-## Original Dolphin README
+## Original Dolphin README for anyone who wants to build it
 
 # Dolphin - A GameCube and Wii Emulator
 

@@ -263,6 +263,9 @@ void HotkeyScheduler::Run()
       if (IsHotkey(HK_MOUSE_INJECTOR_SENSITIVITY_UP))
         MouseInjector::IncreaseSensitivity();
 
+      if (IsHotkey(HK_MOUSE_INJECTOR_CAMERA_MODE_TOGGLE))
+        MouseInjector::ToggleCameraMode();
+
       if (IsHotkey(HK_EXPORT_RECORDING))
         emit ExportRecording();
 

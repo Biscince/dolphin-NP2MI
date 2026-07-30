@@ -19,7 +19,7 @@ namespace Common
 #define BUILD_TYPE_STR ""
 #endif
 
-#define NETPLAY_2P_MOUSE_VERSION "-NP2MI-0.1"
+#define NETPLAY_2P_MOUSE_VERSION "-NP2MI-0.1.0"
 
 const std::string& GetEmulatorName()
 {

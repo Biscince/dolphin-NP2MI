@@ -1,6 +1,7 @@
 #include "Core/MouseInjector.h"
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cmath>
 #include <cstdio>
@@ -9,6 +10,7 @@
 #include "Core/Core.h"
 #include "Core/HW/Memmap.h"
 #include "Core/System.h"
+#include "InputCommon/GCPadStatus.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -24,21 +26,94 @@ static constexpr u32 TS2_FOV = 0x8046818C;
 static constexpr u32 TS2_PLAYER_STRUCT_STRIDE = 0xD60;
 static constexpr u32 TS2_CAM_X_OFFSET = 0x148;
 static constexpr u32 TS2_CAM_Y_OFFSET = 0x14C;
+static constexpr u32 TS2_ALT_CAM_X_OFFSET = 0x1AC;
+static constexpr u32 TS2_ALT_CAM_Y_OFFSET = 0x1B0;
 static constexpr u32 TS2_J1_CAMERA_PTR_OFFSET = 0x008;
 static constexpr u32 TS2_J1_LOCAL_FOV_OFFSET = 0x324;
 static constexpr u32 TS2_CAMERA_MODE_OFFSET = 0x158;
 static constexpr u32 TS2_CAMERA_MODE_VALUE = 8;
+static constexpr u32 TS2_AIM_MODE_OFFSET = 0x8A8;
+static constexpr u32 TS2_AIM_MODE_VALUE = 1;
 static constexpr float TS2_DEFAULT_FOV = 60.f;
 static constexpr float TS2_MIN_FOV_FACTOR = 0.01f;
+static constexpr float TS2_CAMERA_PAD_HORIZONTAL_SCALE_DEFAULT = 10.0f;
+static constexpr float TS2_CAMERA_PAD_VERTICAL_SCALE_DEFAULT = 10.0f;
+static constexpr float TS2_CAMERA_PAD_HORIZONTAL_LIMIT_DEFAULT = 56.0f;
+static constexpr float TS2_CAMERA_PAD_VERTICAL_LIMIT_DEFAULT = 56.0f;
+static constexpr float TS2_CAMERA_PAD_HORIZONTAL_STEP_DEFAULT = 12.0f;
+static constexpr float TS2_CAMERA_PAD_VERTICAL_STEP_DEFAULT = 11.0f;
+static constexpr float TS2_CAMERA_PAD_HORIZONTAL_ATTACK_DEFAULT = 0.15f;
+static constexpr float TS2_CAMERA_PAD_VERTICAL_ATTACK_DEFAULT = 0.15f;
+static constexpr float TS2_CAMERA_PAD_DECAY_DEFAULT = 0.55f;
+static constexpr float TS2_CAMERA_PAD_HORIZONTAL_ACCUM_DECAY_DEFAULT = 0.82f;
+static constexpr float TS2_CAMERA_PAD_VERTICAL_ACCUM_DECAY_DEFAULT = 0.82f;
+static constexpr float TS2_CAMERA_AIM_HORIZONTAL_SCALE_DEFAULT = 1.0f;
+static constexpr float TS2_CAMERA_AIM_VERTICAL_SCALE_DEFAULT = 1.0f;
+static constexpr float TS2_CAMERA_AIM_HORIZONTAL_LIMIT_DEFAULT = 51.0f;
+static constexpr float TS2_CAMERA_AIM_VERTICAL_LIMIT_DEFAULT = 51.0f;
+static constexpr float TS2_CAMERA_AIM_HORIZONTAL_RESPONSE_CURVE_DEFAULT = 0.25f;
+static constexpr float TS2_CAMERA_AIM_VERTICAL_RESPONSE_CURVE_DEFAULT = 0.25f;
+static constexpr float TS2_CAMERA_PAD_HORIZONTAL_DIRECTION = 1.0f;
+static constexpr float TS2_CAMERA_PAD_VERTICAL_DIRECTION = -1.0f;
 
 static bool s_active = false;
+static bool s_camera_mouse_mode = true;
 static float s_sensitivity = 0.5f;
 static int s_lock_cx = 0;
 static int s_lock_cy = 0;
+static float s_camera_horizontal_scale = TS2_CAMERA_PAD_HORIZONTAL_SCALE_DEFAULT;
+static float s_camera_vertical_scale = TS2_CAMERA_PAD_VERTICAL_SCALE_DEFAULT;
+static float s_camera_horizontal_limit = TS2_CAMERA_PAD_HORIZONTAL_LIMIT_DEFAULT;
+static float s_camera_vertical_limit = TS2_CAMERA_PAD_VERTICAL_LIMIT_DEFAULT;
+static float s_camera_horizontal_step = TS2_CAMERA_PAD_HORIZONTAL_STEP_DEFAULT;
+static float s_camera_vertical_step = TS2_CAMERA_PAD_VERTICAL_STEP_DEFAULT;
+static float s_camera_horizontal_attack = TS2_CAMERA_PAD_HORIZONTAL_ATTACK_DEFAULT;
+static float s_camera_vertical_attack = TS2_CAMERA_PAD_VERTICAL_ATTACK_DEFAULT;
+static float s_camera_decay = TS2_CAMERA_PAD_DECAY_DEFAULT;
+static float s_camera_horizontal_accum_decay =
+    TS2_CAMERA_PAD_HORIZONTAL_ACCUM_DECAY_DEFAULT;
+static float s_camera_vertical_accum_decay = TS2_CAMERA_PAD_VERTICAL_ACCUM_DECAY_DEFAULT;
+static float s_camera_aim_horizontal_scale = TS2_CAMERA_AIM_HORIZONTAL_SCALE_DEFAULT;
+static float s_camera_aim_vertical_scale = TS2_CAMERA_AIM_VERTICAL_SCALE_DEFAULT;
+static float s_camera_aim_horizontal_limit = TS2_CAMERA_AIM_HORIZONTAL_LIMIT_DEFAULT;
+static float s_camera_aim_vertical_limit = TS2_CAMERA_AIM_VERTICAL_LIMIT_DEFAULT;
+static float s_camera_aim_horizontal_response_curve =
+    TS2_CAMERA_AIM_HORIZONTAL_RESPONSE_CURVE_DEFAULT;
+static float s_camera_aim_vertical_response_curve =
+    TS2_CAMERA_AIM_VERTICAL_RESPONSE_CURVE_DEFAULT;
+static std::array<float, 4> s_camera_raw_x{};
+static std::array<float, 4> s_camera_raw_y{};
+static std::array<float, 4> s_camera_pad_x{};
+static std::array<float, 4> s_camera_pad_y{};
+static std::array<float, 4> s_camera_aim_x{};
+static std::array<float, 4> s_camera_aim_y{};
+static std::array<bool, 4> s_camera_restricted_aim{};
 
 static constexpr float MIN_SENSITIVITY = 0.1f;
 static constexpr float MAX_SENSITIVITY = 5.0f;
 static constexpr float SENSITIVITY_STEP = 0.1f;
+
+static void ClearCameraPadState()
+{
+  s_camera_raw_x.fill(0.0f);
+  s_camera_raw_y.fill(0.0f);
+  s_camera_pad_x.fill(0.0f);
+  s_camera_pad_y.fill(0.0f);
+  s_camera_aim_x.fill(0.0f);
+  s_camera_aim_y.fill(0.0f);
+  s_camera_restricted_aim.fill(false);
+}
+
+static void ClearCameraPadState(int ingame_pad)
+{
+  s_camera_raw_x[ingame_pad] = 0.0f;
+  s_camera_raw_y[ingame_pad] = 0.0f;
+  s_camera_pad_x[ingame_pad] = 0.0f;
+  s_camera_pad_y[ingame_pad] = 0.0f;
+  s_camera_aim_x[ingame_pad] = 0.0f;
+  s_camera_aim_y[ingame_pad] = 0.0f;
+  s_camera_restricted_aim[ingame_pad] = false;
+}
 
 static bool IsTS2()
 {
@@ -67,8 +142,16 @@ static bool IsLikelyTS2PlayerBase(Core::System& system, u32 address)
 
   const float camx = ReadF32(system, address + TS2_CAM_X_OFFSET);
   const float camy = ReadF32(system, address + TS2_CAM_Y_OFFSET);
-  return std::isfinite(camx) && std::isfinite(camy) && camx >= 0.f && camx < 360.f &&
-         camy >= -90.f && camy <= 90.f;
+  if (std::isfinite(camx) && std::isfinite(camy) && camx >= 0.f && camx < 360.f &&
+      camy >= -90.f && camy <= 90.f)
+  {
+    return true;
+  }
+
+  const float alt_camx = ReadF32(system, address + TS2_ALT_CAM_X_OFFSET);
+  const float alt_camy = ReadF32(system, address + TS2_ALT_CAM_Y_OFFSET);
+  return std::isfinite(alt_camx) && std::isfinite(alt_camy) && alt_camx >= 0.f &&
+         alt_camx < 360.f && alt_camy >= -90.f && alt_camy <= 90.f;
 }
 
 static void UpdateLockCenter()
@@ -142,6 +225,34 @@ static bool IsTS2CameraMode(Core::System& system, u32 playerbase)
          system.GetMemory().Read_U32(playerbase + TS2_CAMERA_MODE_OFFSET) == TS2_CAMERA_MODE_VALUE;
 }
 
+static bool IsTS2AimMode(Core::System& system, u32 playerbase)
+{
+  return IsValidPlayerBase(playerbase) &&
+         system.GetMemory().Read_U32(playerbase + TS2_AIM_MODE_OFFSET) == TS2_AIM_MODE_VALUE;
+}
+
+static float SmoothTowards(float current, float target, float step, float attack)
+{
+  const float change = std::clamp((target - current) * attack, -step, step);
+  return current + change;
+}
+
+static float DecayAxis(float value)
+{
+  value *= s_camera_decay;
+  return std::fabs(value) < 0.5f ? 0.0f : value;
+}
+
+static float ApplyAimResponseCurve(float position, float limit, float response_curve)
+{
+  if (position == 0.0f || limit <= 0.0f)
+    return 0.0f;
+
+  const float normalized = std::clamp(std::fabs(position) / limit, 0.0f, 1.0f);
+  const float curved = std::pow(normalized, response_curve) * limit;
+  return std::copysign(curved, position);
+}
+
 static void InjectTS2(Core::System& system, int ingame_pad, Delta delta)
 {
   if (delta.dx == 0 && delta.dy == 0)
@@ -189,6 +300,8 @@ static void InjectTS2(Core::System& system, int ingame_pad, Delta delta)
 void Toggle()
 {
   s_active = !s_active;
+  if (!s_active)
+    ClearCameraPadState();
   UpdateLockCenter();
   Core::DisplayMessage(s_active ? "NetPlay 2P Mouse: enabled" :
                                   "NetPlay 2P Mouse: disabled",
@@ -201,6 +314,15 @@ void Toggle()
 bool IsActive()
 {
   return s_active;
+}
+
+void ToggleCameraMode()
+{
+  s_camera_mouse_mode = !s_camera_mouse_mode;
+  ClearCameraPadState();
+  Core::DisplayMessage(s_camera_mouse_mode ? "NetPlay 2P Mouse camera: mouse mode" :
+                                             "NetPlay 2P Mouse camera: native mode",
+                       2000);
 }
 
 void DecreaseSensitivity()
@@ -248,6 +370,108 @@ Delta CaptureDelta()
     return {};
 
   return GetMouseDelta();
+}
+
+void ApplyCameraModePadInput(int ingame_pad, const Delta& delta, GCPadStatus* pad_status)
+{
+  if (!pad_status || ingame_pad < 0 || ingame_pad >= static_cast<int>(s_camera_pad_x.size()))
+    return;
+
+  if (!s_camera_mouse_mode)
+  {
+    ClearCameraPadState(ingame_pad);
+    return;
+  }
+
+  auto& system = Core::System::GetInstance();
+  if (!Core::IsRunning(system) || !IsTS2())
+    return;
+
+  const u32 playerbase = GetTS2PlayerBase(system, ingame_pad);
+  if (!IsTS2CameraMode(system, playerbase))
+  {
+    ClearCameraPadState(ingame_pad);
+    return;
+  }
+
+  const bool restricted_aim = IsTS2AimMode(system, playerbase);
+  if (restricted_aim != s_camera_restricted_aim[ingame_pad])
+  {
+    s_camera_raw_x[ingame_pad] = 0.0f;
+    s_camera_raw_y[ingame_pad] = 0.0f;
+    s_camera_pad_x[ingame_pad] = 0.0f;
+    s_camera_pad_y[ingame_pad] = 0.0f;
+    s_camera_aim_x[ingame_pad] = 0.0f;
+    s_camera_aim_y[ingame_pad] = 0.0f;
+    s_camera_restricted_aim[ingame_pad] = restricted_aim;
+  }
+
+  const float fov = GetTS2FovForPlayer(system, playerbase);
+  float fov_factor = 1.0f;
+  if (std::isfinite(fov) && fov > 3.0f)
+    fov_factor = std::clamp(fov / TS2_DEFAULT_FOV, TS2_MIN_FOV_FACTOR, 1.0f);
+
+  const auto to_axis = [](float offset, u8 center) {
+    return static_cast<u8>(
+        std::clamp(static_cast<int>(std::lround(static_cast<float>(center) + offset)), 0, 255));
+  };
+
+  if (restricted_aim)
+  {
+    s_camera_aim_x[ingame_pad] =
+        std::clamp(s_camera_aim_x[ingame_pad] +
+                       delta.dx * TS2_CAMERA_PAD_HORIZONTAL_DIRECTION *
+                           s_camera_aim_horizontal_scale * fov_factor,
+                   -s_camera_aim_horizontal_limit, s_camera_aim_horizontal_limit);
+    s_camera_aim_y[ingame_pad] =
+        std::clamp(s_camera_aim_y[ingame_pad] +
+                       delta.dy * TS2_CAMERA_PAD_VERTICAL_DIRECTION *
+                           s_camera_aim_vertical_scale * fov_factor,
+                   -s_camera_aim_vertical_limit, s_camera_aim_vertical_limit);
+    const float aim_output_x =
+        ApplyAimResponseCurve(s_camera_aim_x[ingame_pad], s_camera_aim_horizontal_limit,
+                              s_camera_aim_horizontal_response_curve);
+    const float aim_output_y =
+        ApplyAimResponseCurve(s_camera_aim_y[ingame_pad], s_camera_aim_vertical_limit,
+                              s_camera_aim_vertical_response_curve);
+    s_camera_pad_x[ingame_pad] = aim_output_x;
+    s_camera_pad_y[ingame_pad] = aim_output_y;
+
+    pad_status->substickX =
+        to_axis(aim_output_x, GCPadStatus::C_STICK_CENTER_X);
+    pad_status->substickY =
+        to_axis(aim_output_y, GCPadStatus::C_STICK_CENTER_Y);
+
+    return;
+  }
+
+  const float raw_target_x = delta.dx * TS2_CAMERA_PAD_HORIZONTAL_DIRECTION *
+                             s_camera_horizontal_scale * fov_factor;
+  s_camera_raw_x[ingame_pad] =
+      std::clamp((s_camera_raw_x[ingame_pad] * s_camera_horizontal_accum_decay) +
+                     raw_target_x,
+                 -s_camera_horizontal_limit, s_camera_horizontal_limit);
+  const float target_x =
+      std::fabs(s_camera_raw_x[ingame_pad]) < 0.5f ? 0.0f : s_camera_raw_x[ingame_pad];
+  const float raw_target_y = delta.dy * TS2_CAMERA_PAD_VERTICAL_DIRECTION *
+                             s_camera_vertical_scale * fov_factor;
+  s_camera_raw_y[ingame_pad] =
+      std::clamp((s_camera_raw_y[ingame_pad] * s_camera_vertical_accum_decay) + raw_target_y,
+                 -s_camera_vertical_limit, s_camera_vertical_limit);
+  const float target_y =
+      std::fabs(s_camera_raw_y[ingame_pad]) < 0.5f ? 0.0f : s_camera_raw_y[ingame_pad];
+
+  s_camera_pad_x[ingame_pad] =
+      target_x == 0.0f ? DecayAxis(s_camera_pad_x[ingame_pad]) :
+                         SmoothTowards(s_camera_pad_x[ingame_pad], target_x,
+                                       s_camera_horizontal_step, s_camera_horizontal_attack);
+  s_camera_pad_y[ingame_pad] =
+      target_y == 0.0f ? DecayAxis(s_camera_pad_y[ingame_pad]) :
+                         SmoothTowards(s_camera_pad_y[ingame_pad], target_y,
+                                       s_camera_vertical_step, s_camera_vertical_attack);
+
+  pad_status->substickX = to_axis(s_camera_pad_x[ingame_pad], GCPadStatus::C_STICK_CENTER_X);
+  pad_status->substickY = to_axis(s_camera_pad_y[ingame_pad], GCPadStatus::C_STICK_CENTER_Y);
 }
 
 void ApplyNetPlayDelta(int ingame_pad, const Delta& delta)
