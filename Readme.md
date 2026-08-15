@@ -1,8 +1,18 @@
-﻿# Dolphin NP2MI
+# Dolphin NP2MI
 
-NP2MI is a custom Dolphin build for synchronized 2-player NetPlay mouse aiming.
-Mouse movement is captured inside Dolphin, transmitted through NetPlay, and
-applied only to the assigned in-game player.
+NP2MI is a custom Dolphin build for synchronized 2-player mouse aiming over
+NetPlay. Mouse movement is sent with Dolphin's NetPlay input data and applied
+only to the assigned in-game player.
+
+## Download
+
+Download the latest portable build from the
+[GitHub Releases page](https://github.com/Biscince/dolphin-NP2MI/releases).
+Extract the archive to a folder and launch `Dolphin.exe`; installation is not
+required.
+
+If the Releases page does not contain a downloadable asset, no public binary
+has been published yet. NP2MI does not include any game files.
 
 ## Version
 
@@ -21,14 +31,14 @@ All NetPlay players must use the exact same NP2MI build and game version.
 | TimeSplitters 2 | PAL (`GTSP4F`) | :x: | None | <sup>Memory profile not implemented yet.</sup> |
 | TimeSplitters: Future Perfect | Any | :x: | None | <sup>No NP2MI input profile is currently implemented.</sup> |
 
-The NTSC-U profile has been tested through the complete 2-player story
-campaign over NetPlay.
+The complete TimeSplitters 2 NTSC-U 2-player story campaign has been tested on
+two PCs over NetPlay.
 
 ## Intended Use
 
-Recommended setup: 2 PCs, Dolphin NetPlay, one player per Dolphin instance.
-This is not currently intended as a polished local split-screen mouse solution
-on a single PC.
+The recommended setup is two PCs, one Dolphin instance and one mouse player per
+PC. NP2MI is not currently intended as a polished local split-screen mouse
+solution on a single PC.
 
 Solo play is also supported, but the game must still be launched through a
 NetPlay session.
@@ -44,54 +54,93 @@ NetPlay session.
 - Adjustable sensitivity.
 - Minimal on-screen messages.
 
-## Default Hotkeys (included in Portable Release version)
+## Included Controller Profiles
+
+The portable release includes keyboard and mouse profiles from the original
+injector:
+
+- `TimeSplitters` (recommended for TimeSplitters 2)
+
+Open Dolphin's controller settings, configure the emulated GameCube controller
+for your assigned port, select the appropriate profile, and load it.
+
+## Default Hotkeys
+
+The portable release includes these default bindings:
 
 ```text
-4          Toggle NetPlay 2P Mouse
-5          Toggle mouse/native camera mode
-SUBTRACT   Decrease NetPlay 2P Mouse Sensitivity
-ADD        Increase NetPlay 2P Mouse Sensitivity
+4                     Toggle NetPlay 2P Mouse
+5                     Toggle mouse/native camera mode
+Numpad - (SUBTRACT)   Decrease NetPlay 2P Mouse Sensitivity
+Numpad + (ADD)        Increase NetPlay 2P Mouse Sensitivity
 ```
 
-These hotkeys can be changed in Dolphin's Hotkey Settings.
+Change them under **Options > Hotkey Settings** if they conflict with your
+keyboard layout or existing Dolphin configuration.
 
-## Recommended NetPlay Setup
+## Starting a NetPlay Session
 
-- Same NP2MI build on both PCs.
-- Same TimeSplitters 2 NTSC-U disc/image.
-- Use "No Save Data" when possible.
-- Avoid mismatched memory cards or save data.
-- Keep cheats, patches, and game-modifying settings identical.
-- Map one in-game player per PC.
+1. Make sure both players use the exact same NP2MI build, TimeSplitters 2
+   NTSC-U game image, cheats, patches, and game-changing settings.
+2. In Dolphin, open **Tools > Start NetPlay**.
+3. One player hosts the session and selects TimeSplitters 2; the other player
+   joins that session.
+4. Assign PC 1 to GameCube Port 1 and PC 2 to GameCube Port 2.
+5. In the NetPlay window, open the **Data** menu and select **No Save Data**.
+6. Start the game, then press `4` locally on each PC to enable mouse injection.
 
-## Suggested Player Assignment
-
-Typical 2-player setup:
+Recommended assignment:
 
 ```text
 PC 1 -> GameCube Port 1 -> Player 1
 PC 2 -> GameCube Port 2 -> Player 2
 ```
 
-Each PC should enable the mouse injection locally with `4` when ready.
+`No Save Data` is recommended because it prevented the campaign desyncs seen
+during testing. Both players should also avoid mismatched memory cards.
+
+Port forwarding is not covered here because the required setup depends on the
+router and connection method. Existing Dolphin NetPlay guides can be used when
+manual port configuration is necessary.
+
+## In-Game Settings
+
+After starting TimeSplitters 2:
+
+1. Open the game's control options and disable **Auto Lookahead**. It interferes
+   with mouse aiming.
+2. If desired, change the controller configuration from **Classic** to
+   **Custom**. This allows crouch and secondary fire to be swapped, along with
+   any other preferred button changes.
 
 ## Known Limitations
 
 - Only TimeSplitters 2 NTSC-U is currently supported.
-- Vertical mouse movement in turret sequences (Siberia/Return to Planet X/Robot Factory) is less consistent than
-  normal first-person aiming.
+- Vertical mouse movement in turret sequences (Siberia, Return to Planet X, and
+  Robot Factory) is less consistent than normal first-person aiming.
 - Camera and turret control emulates native C-stick input and can retain some
   of the original game's aiming behavior.
-- The implementation still uses hardcoded TS2 memory offsets.
+- The implementation still uses hardcoded TimeSplitters 2 memory offsets.
 - Local split-screen mouse control on a single PC is not the intended setup.
-- NetPlay desyncs may still happen due to save data or mismatched settings.
+- NetPlay desyncs may still happen because of save data or mismatched settings.
 
-## Future Work
+## Roadmap (No Commitments)
 
-- TimeSplitters 2 PAL support.
-- A profile system for multiple games and regions.
-- TimeSplitters: Future Perfect support.
-- A dedicated settings tab or UI section.
+Possible future work, in the current order of interest:
+
+1. TimeSplitters: Future Perfect mouse support.
+2. Mouse support for up to four players in Arcade mode.
+3. Additional game and region profiles, including TimeSplitters 2 PAL.
+4. A dedicated NP2MI settings page in Dolphin.
+
+## Community
+
+- [TimeSplitters Online](https://discord.com/servers/timesplitters-online-467580641639268362)
+  organizes online matches and provides setup help.
+- The [TimeSplitters: Rewind community](https://www.timesplittersrewind.com/)
+  maintains its Discord link on the official project website.
+
+These communities are independent from NP2MI.
 
 ## Original Dolphin README for anyone who wants to build it
 
