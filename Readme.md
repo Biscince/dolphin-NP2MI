@@ -119,8 +119,8 @@ manual port configuration is necessary.
 
 After starting TimeSplitters 2:
 
-1. Open the game's control options and disable **Auto Lookahead**. It interferes
-   with mouse aiming.
+1. Open the game's control options and disable both **Auto Lookahead** and
+   **Inverse Look**. They interfere with mouse aiming.
 2. If desired, change the controller configuration from **Classic** to
    **Custom**. This allows crouch and secondary fire to be swapped, along with
    any other preferred button changes.
