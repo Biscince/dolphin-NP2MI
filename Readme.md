@@ -61,8 +61,14 @@ injector:
 
 - `TimeSplitters` (recommended for TimeSplitters 2)
 
-Open Dolphin's controller settings, configure the emulated GameCube controller
-for your assigned port, select the appropriate profile, and load it.
+The `TimeSplitters` profile is preloaded on GameCube Port 1 in the portable
+release. It remains available in Dolphin's controller settings if it needs to
+be reloaded or applied to another port.
+
+The portable release also starts with Vulkan selected, mouse cursor visibility
+set to `Never`, analytics reporting disabled, cheats enabled, and the
+TimeSplitters 2 NTSC-U 16:9 Action Replay code enabled. These settings can
+still be changed by the user.
 
 ## Default Hotkeys
 
@@ -77,6 +83,12 @@ Numpad + (ADD)        Increase NetPlay 2P Mouse Sensitivity
 
 Change them under **Options > Hotkey Settings** if they conflict with your
 keyboard layout or existing Dolphin configuration.
+
+`Escape` is intentionally not assigned to Dolphin's Stop hotkey in the
+portable release. This prevents the confirmation dialog from being opened
+accidentally while the mouse is captured. The in-game Start/menu action is
+mapped to `Enter`. To stop emulation, press `4` to release the mouse, then use
+**Emulation > Stop** or close the emulation window.
 
 ## Starting a NetPlay Session
 
