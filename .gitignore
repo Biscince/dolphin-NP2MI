@@ -46,3 +46,6 @@ CMakeLists.txt.user
 
 # clangd cache for Neovim
 .cache/clangd
+
+# Ignore local thumbnail concepts
+/thumbnail-concepts/

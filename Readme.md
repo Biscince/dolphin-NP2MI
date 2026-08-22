@@ -67,8 +67,9 @@ be reloaded or applied to another port.
 
 The portable release also starts with Vulkan selected, mouse cursor visibility
 set to `Never`, analytics reporting disabled, cheats enabled, and the
-TimeSplitters 2 NTSC-U 16:9 Action Replay code enabled. These settings can
-still be changed by the user.
+TimeSplitters 2 NTSC-U 16:9 Action Replay code enabled. The recommended NetPlay
+Data options are also preconfigured. These settings can still be changed by
+the user.
 
 ## Default Hotkeys
 
@@ -98,7 +99,8 @@ mapped to `Enter`. To stop emulation, press `4` to release the mouse, then use
 3. One player hosts the session and selects TimeSplitters 2; the other player
    joins that session.
 4. Assign PC 1 to GameCube Port 1 and PC 2 to GameCube Port 2.
-5. In the NetPlay window, open the **Data** menu and select **No Save Data**.
+5. In the NetPlay window, open the **Data** menu. Select **No Save Data**, then
+   enable **Sync AR/Gecko Codes** and **Strict Settings Sync**.
 6. Start the game, then press `4` locally on each PC to enable mouse injection.
 
 Recommended assignment:
@@ -108,8 +110,11 @@ PC 1 -> GameCube Port 1 -> Player 1
 PC 2 -> GameCube Port 2 -> Player 2
 ```
 
-`No Save Data` is recommended because it prevented the campaign desyncs seen
-during testing. Both players should also avoid mismatched memory cards.
+These options are preconfigured in the portable release. `No Save Data` is
+recommended because it prevented the campaign desyncs seen during testing.
+Code and strict settings synchronization reduce the risk of differences
+between both Dolphin instances. Both players should also avoid mismatched
+memory cards.
 
 Port forwarding is not covered here because the required setup depends on the
 router and connection method. Existing Dolphin NetPlay guides can be used when
@@ -119,11 +124,14 @@ manual port configuration is necessary.
 
 After starting TimeSplitters 2:
 
-1. Open the game's control options and disable both **Auto Lookahead** and
-   **Inverse Look**. They interfere with mouse aiming.
-2. If desired, change the controller configuration from **Classic** to
-   **Custom**. This allows crouch and secondary fire to be swapped, along with
-   any other preferred button changes.
+| Game Option | Required Value |
+| --- | :---: |
+| Auto Lookahead | Disabled |
+| Inverse Look | Disabled |
+
+Both options interfere with mouse aiming when enabled. The **Custom** controller
+configuration is optional and allows crouch, secondary fire, and other buttons
+to be remapped as preferred.
 
 ## Known Limitations
 
