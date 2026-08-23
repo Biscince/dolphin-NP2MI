@@ -18,11 +18,20 @@
 
 namespace MouseInjector
 {
-static constexpr u32 TS2_PLAYERBASE = 0x804686CC;
-static constexpr u32 TS2_PLAYER1BASE_COOP = 0x807FFC28;
-static constexpr u32 TS2_PLAYER2BASE_COOP = 0x807FFEC8;
-static constexpr u32 TS2_YAXISLIMIT = 0x804686BC;
-static constexpr u32 TS2_FOV = 0x8046818C;
+struct TS2MemoryProfile
+{
+  const char* game_id;
+  u32 playerbase;
+  u32 player1base_coop;
+  u32 player2base_coop;
+  u32 yaxislimit;
+  u32 fov;
+};
+
+static constexpr TS2MemoryProfile TS2_NTSC_U_PROFILE = {
+    "GTSE4F", 0x804686CC, 0x807FFC28, 0x807FFEC8, 0x804686BC, 0x8046818C};
+static constexpr TS2MemoryProfile TS2_PAL_PROFILE = {
+    "GTSP4F", 0x80469E4C, 0x8082E428, 0x8082E6C8, 0x80469E3C, 0x8046990C};
 static constexpr u32 TS2_PLAYER_STRUCT_STRIDE = 0xD60;
 static constexpr u32 TS2_CAM_X_OFFSET = 0x148;
 static constexpr u32 TS2_CAM_Y_OFFSET = 0x14C;
@@ -115,9 +124,19 @@ static void ClearCameraPadState(int ingame_pad)
   s_camera_restricted_aim[ingame_pad] = false;
 }
 
+static const TS2MemoryProfile* GetTS2Profile()
+{
+  const std::string& game_id = SConfig::GetInstance().GetGameID();
+  if (game_id == TS2_NTSC_U_PROFILE.game_id)
+    return &TS2_NTSC_U_PROFILE;
+  if (game_id == TS2_PAL_PROFILE.game_id)
+    return &TS2_PAL_PROFILE;
+  return nullptr;
+}
+
 static bool IsTS2()
 {
-  return SConfig::GetInstance().GetGameID() == "GTSE4F";
+  return GetTS2Profile() != nullptr;
 }
 
 static bool IsValidPlayerBase(u32 address)
@@ -186,9 +205,13 @@ static Delta GetMouseDelta()
 
 static u32 GetTS2PlayerBase(Core::System& system, int ingame_pad)
 {
-  const u32 playerbase = system.GetMemory().Read_U32(TS2_PLAYERBASE);
-  const u32 player1base_coop = system.GetMemory().Read_U32(TS2_PLAYER1BASE_COOP);
-  const u32 player2base_coop = system.GetMemory().Read_U32(TS2_PLAYER2BASE_COOP);
+  const TS2MemoryProfile* const profile = GetTS2Profile();
+  if (!profile)
+    return 0;
+
+  const u32 playerbase = system.GetMemory().Read_U32(profile->playerbase);
+  const u32 player1base_coop = system.GetMemory().Read_U32(profile->player1base_coop);
+  const u32 player2base_coop = system.GetMemory().Read_U32(profile->player2base_coop);
 
   if (IsValidPlayerBase(player1base_coop) && IsValidPlayerBase(player2base_coop) &&
       player1base_coop != player2base_coop)
@@ -208,7 +231,11 @@ static u32 GetTS2PlayerBase(Core::System& system, int ingame_pad)
 
 static float GetTS2FovForPlayer(Core::System& system, u32 playerbase)
 {
-  float fov = ReadF32(system, TS2_FOV);
+  const TS2MemoryProfile* const profile = GetTS2Profile();
+  if (!profile)
+    return TS2_DEFAULT_FOV;
+
+  float fov = ReadF32(system, profile->fov);
   const u32 camera = system.GetMemory().Read_U32(playerbase + TS2_J1_CAMERA_PTR_OFFSET);
   if (IsValidPlayerBase(camera))
   {
@@ -262,12 +289,16 @@ static void InjectTS2(Core::System& system, int ingame_pad, Delta delta)
   if (!IsValidPlayerBase(playerbase))
     return;
 
+  const TS2MemoryProfile* const profile = GetTS2Profile();
+  if (!profile)
+    return;
+
   if (IsTS2CameraMode(system, playerbase))
     return;
 
   const float fov = GetTS2FovForPlayer(system, playerbase);
 
-  const float yaxislimit = ReadF32(system, TS2_YAXISLIMIT);
+  const float yaxislimit = ReadF32(system, profile->yaxislimit);
   if (!std::isfinite(fov) || fov <= 3.f)
     return;
 
